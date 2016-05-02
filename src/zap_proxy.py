@@ -9,6 +9,9 @@ __author__ = 'Vladimir Ulogov'
 __version__ = 'ZAP 0.0.1'
 
 import logging
+import setproctitle
+import imp
+import types
 import argparse
 import clips
 import sys
@@ -22,7 +25,7 @@ import socket
 import multiprocessing
 from multiprocessing.reduction import reduce_handle
 from multiprocessing.reduction import rebuild_handle
-import setproctitle
+
 
 
 logger = logging.getLogger("ZAP")
@@ -251,14 +254,17 @@ class PYCLP(PY,CLP):
     def __init__(self, **argv):
         self.argv = argv
         self.path = []
-        self.Object__set_attr("path", self.argv)
-        apply(PY.__init__, tuple([self,] + [self.path,]))
+        if self.argv.has_key("path"):
+            self.Object__set_attr("path", self.argv)
+            apply(PY.__init__, tuple([self,] + [self.path,]))
+        else:
+            apply(PY.__init__, (self,))
         apply(CLP.__init__, (self,), argv)
     def load_pyclp_module(self, name):
         import fnmatch
         mod = self.find_the_mod(name)
         if mod == None:
-            raise ValueError, "PYCLP modulе %s not found"%name
+            raise ValueError, "PYCLP module %s not found"%name
         c = 0
         for e in dir(mod):
             if fnmatch.fnmatch(e, "*_clips"):
@@ -271,6 +277,32 @@ class PYCLP(PY,CLP):
                 self.clips.Build(getattr(mod, e))
                 c += 1
         return c
+    def filter(self, **args):
+        out = []
+        for f in self.clips.FactList():
+            if args.has_key("relation") and f.Relation == args["relation"]:
+                out.append(f)
+                continue
+            for k in args.keys():
+                if k == "relation":
+                    continue
+                if f.Slots.has_key(k) and f.Slots[k] == args[k]:
+                    out.append(f)
+        return out
+
+
+class DriverPool:
+    def __init__(self):
+        self.pool = {}
+        self.pool["startup"] = {}
+        self.pool["cache"] = {}
+        self.pool["db"] = {}
+    def register(self, drv_type, name, obj):
+        self.pool[drv_type][name] = obj
+    def cache(self, name):
+        return self.pool["cache"][name]
+    def db(self, name):
+        return self.pool["db"][name]
 
 
 
@@ -280,7 +312,76 @@ class ZAPEnv:
         self.args = args
         self.logger = logger
         self.logger.info("Initializing environment")
-        self.py = PY("%s/zap_modules"%self.args.config)
+        self.pc = PYCLP()
+        self.drivers = PYCLP()
+        self.drv = DriverPool()
+    def bootstrap(self):
+        bootstrap_file = "%s/%s"%(self.args.config, self.args.bootstrap)
+        configuration_file = "%s/%s"%(self.args.config, self.args.configuration)
+        self.logger.info("Bootstrapping system with %s"%bootstrap_file)
+        if not check_file_read(bootstrap_file):
+            self.logger.error("File %s is not available for READ"%bootstrap_file)
+            return False
+        try:
+            self.pc.load(file=bootstrap_file)
+        except:
+            return False
+        self.logger.info("Configuring system with %s"%configuration_file)
+        if not check_file_read(configuration_file):
+            self.logger.error("File %s is not available for READ"%bootstrap_file)
+            return False
+        try:
+            self.pc.facts(configuration_file)
+        except:
+            return False
+        try:
+            self.logger.info("Running the configuration")
+            self.pc.clips.Run()
+        except:
+            self.logger.error("Error in running the configuration")
+            return False
+        for m in self.pc.filter(relation="application"):
+            self.logger.info("ZAP Application name       : %-40s"%m.Slots["name"])
+            self.logger.info("ZAP Application description: %-40s"%m.Slots["desc"])
+            self.logger.info("ZAP Application POC        : %-40s"%m.Slots["poc"])
+            self.logger.info("ZAP Application email      : %-40s"%m.Slots["email"])
+            self.logger.info("ZAP Application phone      : %-40s"%m.Slots["phone"])
+        for m in self.pc.filter(relation="py_module"):
+            self.logger.info("Adding path %s for the '%s'"%(m.Slots["path"],m.Slots["name"]))
+            if not m.Slots["path"]:
+                self.logger.error("Path %s for Python modules is incorrect"%m.Slots["path"])
+                continue
+            self.pc += str(m.Slots["path"])
+        self.pc.reload_mods()
+        for m in self.pc.filter(relation="clips_mod"):
+            self.logger.info("Loading CLP(%s) functions for '%s'"%(m.Slots["name"],m.Slots["desc"]))
+            self.pc.load_pyclp_module(str(m.Slots["name"]))
+        for m in self.pc.filter(relation="start"):
+            try:
+                self.pc(m.Slots["name"], self.pc, self.logger)
+            except ValueError, msg:
+                self.logger.error("Exception in startup module: %s"%msg)
+        return True
+    def load_drivers(self):
+        self.logger.info("Loading ZAP drivers")
+        for m in self.pc.filter(relation="driver_path"):
+            self.logger.info("Adding driver path %s for the '%s'"%(m.Slots["path"],m.Slots["name"]))
+            if not m.Slots["path"]:
+                self.logger.error("Path %s for ZAP drivers is incorrect"%m.Slots["path"])
+                continue
+            self.drivers += str(m.Slots["path"])
+        self.drivers.reload_mods()
+        for m in self.pc.filter(relation="driver"):
+            driver_type = str(m.Slots["type"]).lower()
+            try:
+                obj = self.drivers("%s.main"%m.Slots["name"], self.pc, self.logger)
+            except ValueError, msg:
+                self.logger.error("Exception in initialisation: %s"%msg)
+                continue
+            self.drv.register(driver_type, str(m.Slots["name"]), obj)
+        return True
+
+
 
 
 
@@ -368,7 +469,14 @@ def set_logging(args):
 
 def Loop():
     global logger, ARGS
+
     ENV = ZAPEnv(ARGS)
+    if not ENV.bootstrap():
+        logger.error("Error in boostrapping and/or configuration")
+        return
+    if not ENV.load_drivers():
+        logger.error("Error in loading ZAP drivers")
+        return
     logger.info("Entering loop...")
     while True:
         pass

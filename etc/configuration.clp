@@ -17,3 +17,44 @@
     (name "Main PY modules")
     (path "/root/Src/zap_proxy/etc/zap_modules")
 )
+
+;;
+;; Locations of the PYTHON-CLIPS integration
+;;
+(py_module
+    (name "Main PYCLP bindings")
+    (path "/root/Src/zap_proxy/etc/zap_clips")
+)
+
+;;
+;; Load PYCLIPS binding
+;;
+(clips_mod
+    (name "match")
+    (desc "Pattern matching functions")
+)
+
+;;
+;; Path for the Drivers
+;;
+(driver_path
+    (name "Path for the main ZAP drivers")
+    (path "/root/Src/zap_proxy/etc/zap_drivers")
+)
+
+;;
+;; Load specific driver
+;;
+(driver
+    (type "startup")
+    (name "dummy")
+    (desc "Dummy startup driver")
+)
+;;
+;; Execute this code during ZAP startup
+;;
+
+(start
+    (name "dummy.main")
+    (desc "Dummy startup code")
+)

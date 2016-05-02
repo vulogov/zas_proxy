@@ -47,10 +47,11 @@
 
     )
 )
+
 ;;
-;; CLIPS modules loaded into USS
+;; PYTHON driver path for the drivers loaded into USS
 ;;
-(deftemplate clp_module
+(deftemplate driver_path
     (slot name
         (type STRING)
         (default ?DERIVE)
@@ -62,23 +63,24 @@
     )
 )
 ;;
-;; PYCLIPS binding
+;; PYTHON drivers loaded into USS
 ;;
-(deftemplate pcbind
-    (slot name
+(deftemplate driver
+    (slot type
         (type STRING)
         (default ?DERIVE)
     )
-    (slot path
+    (slot name
         (type STRING)
-        (default "./")
+        (default ?DERIVE)
     )
     (slot desc
         (type STRING)
         (default "")
-
     )
 )
+
+
 ;;
 ;; USS Configuration facts
 ;;
@@ -100,6 +102,22 @@
 ;; USS startup modules
 ;;
 (deftemplate start
+    (slot name
+        (type STRING)
+        (default ?DERIVE)
+    )
+    (slot desc
+        (type STRING)
+        (default "")
+
+    )
+)
+
+;;
+;; Load the specific CLIPS integration module
+;;
+
+(deftemplate clips_mod
     (slot name
         (type STRING)
         (default ?DERIVE)
