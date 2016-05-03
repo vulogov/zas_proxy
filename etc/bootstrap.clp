@@ -143,7 +143,6 @@
     (slot desc
         (type STRING)
         (default "")
-
     )
 )
 
@@ -157,9 +156,22 @@
     )
     (slot interface
         (type STRING)
-        (default ?DERIVE)
+        (default "127.0.0.1")
     )
     (slot port
         (type INTEGER)
     )
+    (slot n
+        (type INTEGER)
+        (default 3)
+    )
+    (slot driver
+        (type STRING)
+        (default ?DERIVE)
+    )
+    (slot desc
+        (type STRING)
+        (default "")
+    )
+    (multislot args)
 )

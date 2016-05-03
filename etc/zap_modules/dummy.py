@@ -6,12 +6,13 @@ __version__ = 'v0.1.0'
 ## env - ZAP environment
 ## args, argv - arguments and keywork adruments passed
 ##
-def daemon(env, args, argv):
+def daemon(env, proc, args, argv):
     import time
     env.logger.info("Dummy daemon started %s"%repr(args))
     while True:
         time.sleep(5)
         env.logger.info("Dummy daemon running")
+        proc.setproctitle("Dummy daemon at: %s"%time.asctime())
 
 
 def main(env, logger, *args, **argv):

@@ -110,7 +110,7 @@ class Object(object):
 def proctitle(main, msg):
     setproctitle.setproctitle("%s(%s): %s"%(__proc__, main, msg))
 
-def daemon_process(env, name, main, args, argv):
+def daemon_process(env, name, main, proc, args, argv):
     if not name:
         env.logger.info("Can not execute process without a name")
         return
@@ -120,8 +120,9 @@ def daemon_process(env, name, main, args, argv):
     env.logger.info("Attempting to execute %s as %s"%(main, name))
     proctitle(main, name)
     try:
-        env.pc(main, env, args, argv)
+        env.pc(main, env, proc, args, argv)
     except ValueError, msg:
+    #except FloatingPointError:
         env.logger.error("Exception in %s: %s"%(main, msg))
 
 class DaemonProcess(multiprocessing.Process, Object):
@@ -131,12 +132,70 @@ class DaemonProcess(multiprocessing.Process, Object):
         self.Object__set_attr("env", argv)
         self.Object__set_attr("args", argv, ())
         self.Object__set_attr("kw", argv, {})
-        passed_args = (self.env, self.name, self.main, self.args, self.kw)
+        passed_args = (self.env, self.name, self.main, self, self.args, self.kw)
         multiprocessing.Process.__init__(self, target=daemon_process, name=self.name, args=passed_args)
         self.authkey=self.env.authkey
         self.daemon = True
     def setproctitle(self, msg):
         proctitle(self.main, msg)
+
+def listener_process(env, name, driver, proc, args, kw):
+    if not driver:
+        env.logger.info("Can not execute listener process without a driver")
+        return
+    if not name:
+        env.logger.info("Can not execute listener process without a name")
+        return
+    return
+
+class ListenerProcess(multiprocessing.Process, Object):
+    def __init__(self, **argv):
+        self.Object__set_attr("driver", argv)
+        self.Object__set_attr("name", argv)
+        self.Object__set_attr("env", argv)
+        self.Object__set_attr("args", argv, ())
+        self.Object__set_attr("kw", argv, {})
+        passed_args = (self.env, self.name, self.driver, self, self.args, self.kw)
+        multiprocessing.Process.__init__(self, target=listener_process, name=self.name, args=passed_args)
+        self.authkey=self.env.authkey
+        self.daemon = False
+
+
+
+
+########################################################################################################################
+## Network-related classes
+########################################################################################################################
+
+
+
+class ZAPConnectionWorker(multiprocessing.Process):
+    def __init__(self, sq):
+
+        self.SLEEP_INTERVAL = 1  # base class initialization
+        multiprocessing.Process.__init__(self)
+        self.socket_queue = sq
+        self.kill_received = False
+
+    def run(self):
+        while not self.kill_received:
+            try:
+                h = self.socket_queue.get_nowait()
+                fd = rebuild_handle(h)
+                client_socket = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
+                received = client_socket.recv(1024)
+                print "Recieved on client: ", received
+                client_socket.close()
+            except Queue.Empty:
+                pass
+            time.sleep(self.SLEEP_INTERVAL)
+
+
+class ZAPTCPHandler(SocketServer.BaseRequestHandler):
+    def handle(self):
+        h = reduce_handle(self.request.fileno())
+        socket_queue.put(h)
+
 
 
 
@@ -275,6 +334,9 @@ class PYEXEC:
             raise ValueError, "Function %s.%s not exists"%(_mod, _fun)
         try:
             return apply(fun, args, kw)
+        #except FloatingPointError:
+        except KeyboardInterrupt:
+            return
         except:
             raise ValueError, "Error in %s.%s"%(_mod, _fun)
     def execute(self, _fun, *args, **kw):
@@ -358,12 +420,15 @@ class DriverPool:
         self.pool["startup"] = {}
         self.pool["cache"] = {}
         self.pool["db"] = {}
+        self.pool["protocol"] = {}
     def register(self, drv_type, name, obj):
         self.pool[drv_type][name] = obj
     def cache(self, name):
         return self.pool["cache"][name]
     def db(self, name):
         return self.pool["db"][name]
+    def protocol(self, name):
+        return self.pool["protocol"][name]
 
 
 
@@ -450,47 +515,19 @@ class ZAPEnv:
             try:
                 d = DaemonProcess(name=str(m.Slots["name"]), main=str(m.Slots["main"]), env=self, args=multifield2py(m.Slots["args"]))
                 d.start()
-            except KeyboardInterrupt:
+            except:
                 self.logger.error("Exception while starting '%s' as %s"%(m.Slots["desc"], m.Slots["main"]))
+    def start_listeners(self):
+        self.logger.info("Starting network listeners")
+        print self.drv.pool
+        for m in self.pc.filter(relation="daemon"):
+            print m
+        return True
 
 
 
 
 
-
-
-########################################################################################################################
-## Network-related classes
-########################################################################################################################
-
-
-
-class ZAPConnectionWorker(multiprocessing.Process):
-    def __init__(self, sq):
-
-        self.SLEEP_INTERVAL = 1  # base class initialization
-        multiprocessing.Process.__init__(self)
-        self.socket_queue = sq
-        self.kill_received = False
-
-    def run(self):
-        while not self.kill_received:
-            try:
-                h = self.socket_queue.get_nowait()
-                fd = rebuild_handle(h)
-                client_socket = socket.fromfd(fd, socket.AF_INET, socket.SOCK_STREAM)
-                received = client_socket.recv(1024)
-                print "Recieved on client: ", received
-                client_socket.close()
-            except Queue.Empty:
-                pass
-            time.sleep(self.SLEEP_INTERVAL)
-
-
-class ZAPTCPHandler(SocketServer.BaseRequestHandler):
-    def handle(self):
-        h = reduce_handle(self.request.fileno())
-        socket_queue.put(h)
 
 
 
@@ -550,9 +587,22 @@ def Loop():
         logger.error("Error in loading ZAP drivers")
         return
     ENV.run_daemons()
+    if not ENV.start_listeners():
+        logger.error("Error in listeners initialization")
+        return
     logger.info("Entering loop...")
-    while True:
-        pass
+    proctitle("main", "Main loop")
+
+    try:
+        while True:
+            time.sleep(5)
+    except:
+        logger.info("Exit loop...")
+        childs = multiprocessing.active_children()
+        for p in childs:
+            logger.info("Terminating %s"%p.name)
+            p.terminate()
+            p.join()
 
 
 def Start(args, parser):

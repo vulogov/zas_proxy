@@ -51,6 +51,12 @@
     (desc "Dummy startup driver")
     (args 1 2 3)
 )
+(driver
+    (type "protocol")
+    (name "zabbix_trapper")
+    (desc "Zabbix trapper protocol driver")
+    (args 1 2 3)
+)
 ;;
 ;; Start the daemons
 ;;
@@ -68,4 +74,15 @@
     (name "dummy.main")
     (desc "Dummy startup code")
     (args "b" 1 2 3.14 TRUE)
+)
+
+;;
+;; Now, configure the LISTEN interfaces
+;;
+(listen
+    (name "trapper %d")
+    (desc "Zabbix trapper interface")
+    (interface "0.0.0.0")
+    (port 10051)
+    (driver "zabbix_trapper")
 )
