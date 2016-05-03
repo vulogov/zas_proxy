@@ -51,6 +51,14 @@
     (desc "Dummy startup driver")
 )
 ;;
+;; Start the daemons
+;;
+(daemon
+    (main "dummy.daemon")
+    (name "dummy_daemon")
+    (desc "Dummy ZAP daemon")
+)
+;;
 ;; Execute this code during ZAP startup
 ;;
 

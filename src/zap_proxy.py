@@ -7,6 +7,7 @@
 
 __author__ = 'Vladimir Ulogov'
 __version__ = 'ZAP 0.0.1'
+__proc__    = 'ZAP'
 
 import logging
 import setproctitle
@@ -22,6 +23,7 @@ import daemonize
 import SocketServer
 import Queue
 import socket
+import uuid
 import multiprocessing
 from multiprocessing.reduction import reduce_handle
 from multiprocessing.reduction import rebuild_handle
@@ -94,9 +96,48 @@ def rchop(thestring, ending):
 
 
 class Object(object):
-    def Object__set_attr(self, key, argv):
+    def Object__set_attr(self, key, argv, default=None):
         if argv.has_key(key):
             setattr(self, key, argv[key])
+        else:
+            setattr(self, key, default)
+
+
+########################################################################################################################
+## Process-related classes
+########################################################################################################################
+
+def proctitle(main, msg):
+    setproctitle.setproctitle("%s(%s): %s"%(__proc__, main, msg))
+
+def daemon_process(env, name, main, args, argv):
+    if not name:
+        env.logger.info("Can not execute process without a name")
+        return
+    if not main:
+        env.logger.info("Can not execute process without a main function")
+        return
+    env.logger.info("Attempting to execute %s as %s"%(main, name))
+    proctitle(main, name)
+    try:
+        env.pc(main, env, args, argv)
+    except ValueError, msg:
+        env.logger.error("Exception in %s: %s"%(main, msg))
+
+class DaemonProcess(multiprocessing.Process, Object):
+    def __init__(self, **argv):
+        self.Object__set_attr("main", argv)
+        self.Object__set_attr("name", argv)
+        self.Object__set_attr("env", argv)
+        self.Object__set_attr("args", argv, ())
+        self.Object__set_attr("kw", argv, {})
+        passed_args = (self.env, self.name, self.main, self.args, self.kw)
+        multiprocessing.Process.__init__(self, target=daemon_process, name=self.name, args=passed_args)
+        self.authkey=self.env.authkey
+        self.daemon = True
+    def setproctitle(self, msg):
+        proctitle(self.main, msg)
+
 
 
 ########################################################################################################################
@@ -312,6 +353,7 @@ class ZAPEnv:
         self.args = args
         self.logger = logger
         self.logger.info("Initializing environment")
+        self.authkey = str(uuid.uuid4())
         self.pc = PYCLP()
         self.drivers = PYCLP()
         self.drv = DriverPool()
@@ -368,7 +410,7 @@ class ZAPEnv:
             self.logger.info("Adding driver path %s for the '%s'"%(m.Slots["path"],m.Slots["name"]))
             if not m.Slots["path"]:
                 self.logger.error("Path %s for ZAP drivers is incorrect"%m.Slots["path"])
-                continue
+                return False
             self.drivers += str(m.Slots["path"])
         self.drivers.reload_mods()
         for m in self.pc.filter(relation="driver"):
@@ -377,9 +419,18 @@ class ZAPEnv:
                 obj = self.drivers("%s.main"%m.Slots["name"], self.pc, self.logger)
             except ValueError, msg:
                 self.logger.error("Exception in initialisation: %s"%msg)
-                continue
+                return False
             self.drv.register(driver_type, str(m.Slots["name"]), obj)
         return True
+    def run_daemons(self):
+        self.logger.info("Starting background ZAP daemons")
+        for m in self.pc.filter(relation="daemon"):
+            self.logger.info("Attempting to spawn '%s' as %s"%(m.Slots["desc"], m.Slots["main"]))
+            try:
+                d = DaemonProcess(name=str(m.Slots["name"]), main=str(m.Slots["main"]), env=self)
+                d.start()
+            except KeyboardInterrupt:
+                self.logger.error("Exception while starting '%s' as %s"%(m.Slots["desc"], m.Slots["main"]))
 
 
 
@@ -477,6 +528,7 @@ def Loop():
     if not ENV.load_drivers():
         logger.error("Error in loading ZAP drivers")
         return
+    ENV.run_daemons()
     logger.info("Entering loop...")
     while True:
         pass

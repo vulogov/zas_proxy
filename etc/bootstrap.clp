@@ -79,8 +79,23 @@
         (default "")
     )
 )
-
-
+;;
+;; PYTHON daemin procresses
+;;
+(deftemplate daemon
+    (slot main
+        (type STRING)
+        (default "")
+    )
+    (slot name
+        (type STRING)
+        (default ?DERIVE)
+    )
+    (slot desc
+        (type STRING)
+        (default "")
+    )
+)
 ;;
 ;; USS Configuration facts
 ;;
