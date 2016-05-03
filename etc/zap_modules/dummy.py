@@ -8,12 +8,12 @@ __version__ = 'v0.1.0'
 ##
 def daemon(env, args, argv):
     import time
-    env.logger.info("Dummy daemon started")
+    env.logger.info("Dummy daemon started %s"%repr(args))
     while True:
         time.sleep(5)
         env.logger.info("Dummy daemon running")
 
 
 def main(env, logger, *args, **argv):
-    args = tuple(list(args[2:]))
-    logger.info("This startup function doesn't do much %s %s"%(repr(env),repr(args)))
+    #args = tuple(list(args[2:]))
+    logger.info("This startup function doesn't do much %s"%repr(args))

@@ -49,6 +49,7 @@
     (type "startup")
     (name "dummy")
     (desc "Dummy startup driver")
+    (args 1 2 3)
 )
 ;;
 ;; Start the daemons
@@ -57,6 +58,7 @@
     (main "dummy.daemon")
     (name "dummy_daemon")
     (desc "Dummy ZAP daemon")
+    (args "a" "b" "c")
 )
 ;;
 ;; Execute this code during ZAP startup
@@ -65,4 +67,5 @@
 (start
     (name "dummy.main")
     (desc "Dummy startup code")
+    (args "b" 1 2 3.14 TRUE)
 )

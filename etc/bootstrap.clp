@@ -78,6 +78,7 @@
         (type STRING)
         (default "")
     )
+    (multislot args)
 )
 ;;
 ;; PYTHON daemin procresses
@@ -95,6 +96,7 @@
         (type STRING)
         (default "")
     )
+    (multislot args)
 )
 ;;
 ;; USS Configuration facts
@@ -126,6 +128,7 @@
         (default "")
 
     )
+    (multislot args)
 )
 
 ;;

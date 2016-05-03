@@ -144,6 +144,26 @@ class DaemonProcess(multiprocessing.Process, Object):
 ## Clips and Clips
 ########################################################################################################################
 
+
+def clp2py(val):
+    try:
+        t,v = val.clrepr()
+    except:
+        return val
+    if t in [0,1,3]:
+        return v
+    elif t == 2 and v == 'TRUE':
+        return True
+    elif t == 2 and v == 'FALSE':
+        return False
+    return v
+
+def multifield2py(val):
+    out = []
+    for f in val:
+        out.append(clp2py(f))
+    return tuple(out)
+
 class FACT:
     def facts(self, fname):
         self.clips.LoadFacts(fname)
@@ -400,8 +420,9 @@ class ZAPEnv:
             self.pc.load_pyclp_module(str(m.Slots["name"]))
         for m in self.pc.filter(relation="start"):
             try:
-                self.pc(m.Slots["name"], self.pc, self.logger)
+                self.pc(m.Slots["name"], self.pc, self.logger, multifield2py(m.Slots["args"]))
             except ValueError, msg:
+            #except KeyboardInterrupt:
                 self.logger.error("Exception in startup module: %s"%msg)
         return True
     def load_drivers(self):
@@ -416,7 +437,7 @@ class ZAPEnv:
         for m in self.pc.filter(relation="driver"):
             driver_type = str(m.Slots["type"]).lower()
             try:
-                obj = self.drivers("%s.main"%m.Slots["name"], self.pc, self.logger)
+                obj = self.drivers("%s.main"%m.Slots["name"], self.pc, self.logger, multifield2py(m.Slots["args"]))
             except ValueError, msg:
                 self.logger.error("Exception in initialisation: %s"%msg)
                 return False
@@ -427,7 +448,7 @@ class ZAPEnv:
         for m in self.pc.filter(relation="daemon"):
             self.logger.info("Attempting to spawn '%s' as %s"%(m.Slots["desc"], m.Slots["main"]))
             try:
-                d = DaemonProcess(name=str(m.Slots["name"]), main=str(m.Slots["main"]), env=self)
+                d = DaemonProcess(name=str(m.Slots["name"]), main=str(m.Slots["main"]), env=self, args=multifield2py(m.Slots["args"]))
                 d.start()
             except KeyboardInterrupt:
                 self.logger.error("Exception while starting '%s' as %s"%(m.Slots["desc"], m.Slots["main"]))
