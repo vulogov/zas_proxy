@@ -86,3 +86,11 @@
     (port 10051)
     (driver "zabbix_trapper")
 )
+
+;;
+;; Zabbix servers
+;;
+(zabbix_server
+    (name "dev.zabbix.us")
+    (desc "Local Zabbix Server")
+)
