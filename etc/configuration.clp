@@ -10,6 +10,14 @@
 )
 
 ;;
+;; Path for the Drivers
+;;
+(pythonpath
+    (desc "Path to a ZAP modules")
+    (path "/root/Src/zap_proxy/etc/python")
+)
+
+;;
 ;; Location of the loadable Python modules
 ;;
 
@@ -45,12 +53,12 @@
 ;;
 ;; Load specific driver
 ;;
-(driver
-    (type "startup")
-    (name "dummy")
-    (desc "Dummy startup driver")
-    (args 1 2 3)
-)
+;(driver
+;    (type "startup")
+;    (name "dummy")
+;    (desc "Dummy startup driver")
+;    (args 1 2 3)
+;)
 (driver
     (type "protocol")
     (name "zabbix_trapper")
@@ -70,7 +78,7 @@
 ;; Define drivers chain
 ;;
 (driver_chain
-    (name "zabbix-ative_proxy")
+    (name "zabbix_active_proxy")
     (chain "zabbix")
 )
 ;;

@@ -34,6 +34,19 @@
     )
 )
 ;;
+;; Directories added to a PYTHONPATH
+;;
+(deftemplate pythonpath
+    (slot desc
+        (type STRING)
+        (default ?DERIVE)
+    )
+    (slot path
+        (type STRING)
+        (default ?DERIVE)
+    )
+)
+;;
 ;; PYTHON modules loaded into USS
 ;;
 (deftemplate py_module
@@ -183,6 +196,10 @@
     (slot desc
         (type STRING)
         (default "")
+    )
+    (slot timeout
+        (type INTEGER)
+        (default 3)
     )
     (multislot args)
 )

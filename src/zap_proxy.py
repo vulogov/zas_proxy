@@ -334,10 +334,10 @@ class PYEXEC:
             raise ValueError, "Function %s.%s not exists"%(_mod, _fun)
         try:
             return apply(fun, args, kw)
-        #except FloatingPointError:
-        except KeyboardInterrupt:
-            return
-        except:
+        except FloatingPointError:
+        #except KeyboardInterrupt:
+        #   return
+        #except:
             raise ValueError, "Error in %s.%s"%(_mod, _fun)
     def execute(self, _fun, *args, **kw):
         out = {}
@@ -420,6 +420,7 @@ class PYCLP(PY,CLP):
 
 class DriverPool:
     def __init__(self):
+        self.chain = {}
         self.pool = {}
         self.pool["startup"] = {}
         self.pool["cache"] = {}
@@ -427,12 +428,16 @@ class DriverPool:
         self.pool["protocol"] = {}
     def register(self, drv_type, name, obj):
         self.pool[drv_type][name] = obj
+    def register_chain(self, name, chain):
+        self.chain[name] = chain
     def cache(self, name):
         return self.pool["cache"][name]
     def db(self, name):
         return self.pool["db"][name]
     def protocol(self, name):
         return self.pool["protocol"][name]
+    def protocols(self):
+        return self.pool["protocol"].keys()
 
 
 
@@ -477,6 +482,7 @@ class ZAPEnv:
             self.logger.info("ZAP Application POC        : %-40s"%m.Slots["poc"])
             self.logger.info("ZAP Application email      : %-40s"%m.Slots["email"])
             self.logger.info("ZAP Application phone      : %-40s"%m.Slots["phone"])
+        self.set_pythonpath()
         for m in self.pc.filter(relation="py_module"):
             self.logger.info("Adding path %s for the '%s'"%(m.Slots["path"],m.Slots["name"]))
             if not m.Slots["path"]:
@@ -494,6 +500,15 @@ class ZAPEnv:
             #except KeyboardInterrupt:
                 self.logger.error("Exception in startup module: %s"%msg)
         return True
+    def set_pythonpath(self):
+        for m in self.pc.filter(relation="pythonpath"):
+            path = clp2py(m.Slots["path"])
+            if not check_directory(path):
+                self.logger.error("PYTHONPATH '%s' can not be accessed"%path)
+                continue
+            self.logger.info("PYTHONPATH: %s"%path)
+            sys.path.append(path)
+
     def load_drivers(self):
         self.logger.info("Loading ZAP drivers")
         for m in self.pc.filter(relation="driver_path"):
@@ -503,11 +518,23 @@ class ZAPEnv:
                 return False
             self.drivers += str(m.Slots["path"])
         self.drivers.reload_mods()
+        self.logger.info("Registering drivers chains")
+        for m in self.pc.filter(relation="driver_chain"):
+            name = str(m.Slots["name"]).strip()
+            if not name:
+                continue
+            self.logger.info("Registering drivers chain for %s"%name)
+            self.drv.register_chain(name, multifield2py(m.Slots["chain"]))
         for m in self.pc.filter(relation="driver"):
             driver_type = str(m.Slots["type"]).lower()
             try:
-                obj = self.drivers("%s.main"%m.Slots["name"], self.pc, self.logger, multifield2py(m.Slots["args"]))
-            except ValueError, msg:
+                obj = self.drivers("%s.main"%m.Slots["name"], self, self.logger, multifield2py(m.Slots["args"]))
+                try:
+                    obj.driver()
+                except FloatingPointError:
+                    print "A",obj
+            #except ValueError, msg:
+            except FloatingPointError, msg:
                 self.logger.error("Exception in initialisation: %s"%msg)
                 return False
             self.drv.register(driver_type, str(m.Slots["name"]), obj)
@@ -523,7 +550,6 @@ class ZAPEnv:
                 self.logger.error("Exception while starting '%s' as %s"%(m.Slots["desc"], m.Slots["main"]))
     def start_listeners(self):
         self.logger.info("Starting network listeners")
-        print self.drv.pool
         for m in self.pc.filter(relation="daemon"):
             print m
         return True
