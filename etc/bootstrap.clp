@@ -80,6 +80,17 @@
     )
     (multislot args)
 )
+(deftemplate driver_chain
+    (slot name
+        (type STRING)
+        (default ?DERIVE)
+    )
+    (slot desc
+        (type STRING)
+        (default "")
+    )
+    (multislot chain)
+)
 ;;
 ;; PYTHON daemin procresses
 ;;
@@ -187,26 +198,21 @@
         (type STRING)
         (default "")
     )
-    )
     (slot address
         (type STRING)
         (default "127.0.0.1")
-    )
     )
     (slot port
         (type INTEGER)
         (default 10051)
     )
-    )
     (slot url
         (type STRING)
         (default "")
     )
-    )
     (slot login
         (type STRING)
         (default "")
-    )
     )
     (slot password
         (type STRING)

@@ -1,7 +1,7 @@
 __author__  =  'Vladimir Ulogov'
 __version__ = 'v0.1.0'
 
-class ZabbixTrapperProtocol:
+class ZabbixActiveProxyProtocol:
     def __init__(self, creator):
         self.creator = creator
         self.env = self.creator.env
@@ -13,16 +13,16 @@ class ZabbixTrapperProtocol:
     def send(self):
         return "***"
 
-class ZabbixTrapperProtocolCreator:
+class ZabbixActiveProxyProtocolCreator:
     def __init__(self, env, logger, args, argv):
         self.env = env
         self.logger = logger
         self.args = args
         self.argv = argv
     def driver(self):
-        return ZabbixTrapperProtocol(self)
+        return ZabbixActiveProxyProtocol(self)
 
 
 
 def main(env, logger, *args, **argv):
-    return ZabbixTrapperProtocolCreator(env, logger, args, argv)
+    return ZabbixActiveProxyCreator(env, logger, args, argv)

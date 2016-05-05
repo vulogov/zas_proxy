@@ -55,7 +55,23 @@
     (type "protocol")
     (name "zabbix_trapper")
     (desc "Zabbix trapper protocol driver")
-    (args 1 2 3)
+)
+(driver
+    (type "protocol")
+    (name "zabbix_active_proxy")
+    (desc "Zabbix Active Proxy protocol driver")
+)
+(driver
+    (type "protocol")
+    (name "zabbix")
+    (desc "Zabbix protocol driver")
+)
+;;
+;; Define drivers chain
+;;
+(driver_chain
+    (name "zabbix-ative_proxy")
+    (chain "zabbix")
 )
 ;;
 ;; Start the daemons
@@ -65,6 +81,12 @@
     (name "dummy_daemon")
     (desc "Dummy ZAP daemon")
     (args "a" "b" "c")
+)
+(daemon
+    (main "zabbix.heartbeat")
+    (name "Heartbeat")
+    (desc "Zabbix Heartbeat daemon")
+    (args "dev-zap")
 )
 ;;
 ;; Execute this code during ZAP startup
@@ -83,8 +105,7 @@
     (name "trapper %d")
     (desc "Zabbix trapper interface")
     (interface "0.0.0.0")
-    (port 10051)
-    (driver "zabbix_trapper")
+    (port 11051)
 )
 
 ;;
