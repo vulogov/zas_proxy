@@ -107,37 +107,20 @@ class Object(object):
 ## Process-related classes
 ########################################################################################################################
 
-def proctitle(main, msg):
-    setproctitle.setproctitle("%s(%s): %s"%(__proc__, main, msg))
 
-def daemon_process(env, name, main, proc, args, argv):
-    if not name:
-        env.logger.info("Can not execute process without a name")
-        return
-    if not main:
-        env.logger.info("Can not execute process without a main function")
-        return
-    env.logger.info("Attempting to execute %s as %s"%(main, name))
-    proctitle(main, name)
-    try:
-        env.pc(main, env, proc, args, argv)
-    except ValueError, msg:
-    #except FloatingPointError:
-        env.logger.error("Exception in %s: %s"%(main, msg))
-
-class DaemonProcess(multiprocessing.Process, Object):
-    def __init__(self, **argv):
-        self.Object__set_attr("main", argv)
-        self.Object__set_attr("name", argv)
-        self.Object__set_attr("env", argv)
-        self.Object__set_attr("args", argv, ())
-        self.Object__set_attr("kw", argv, {})
-        passed_args = (self.env, self.name, self.main, self, self.args, self.kw)
-        multiprocessing.Process.__init__(self, target=daemon_process, name=self.name, args=passed_args)
-        self.authkey=self.env.authkey
-        self.daemon = True
-    def setproctitle(self, msg):
-        proctitle(self.main, msg)
+#class DaemonProcess(multiprocessing.Process, Object):
+#    def __init__(self, **argv):
+#        self.Object__set_attr("main", argv)
+#        self.Object__set_attr("name", argv)
+#        self.Object__set_attr("env", argv)
+#        self.Object__set_attr("args", argv, ())
+#        self.Object__set_attr("kw", argv, {})
+#        passed_args = (self.env, self.name, self.main, self, self.args, self.kw)
+#        multiprocessing.Process.__init__(self, target=daemon_process, name=self.name, args=passed_args)
+#        self.authkey=self.env.authkey
+#        self.daemon = True
+#    def setproctitle(self, msg):
+#        proctitle(self.main, msg)
 
 def listener_process(env, name, driver, proc, args, kw):
     if not driver:
@@ -147,18 +130,6 @@ def listener_process(env, name, driver, proc, args, kw):
         env.logger.info("Can not execute listener process without a name")
         return
     return
-
-class ListenerProcess(multiprocessing.Process, Object):
-    def __init__(self, **argv):
-        self.Object__set_attr("driver", argv)
-        self.Object__set_attr("name", argv)
-        self.Object__set_attr("env", argv)
-        self.Object__set_attr("args", argv, ())
-        self.Object__set_attr("kw", argv, {})
-        passed_args = (self.env, self.name, self.driver, self, self.args, self.kw)
-        multiprocessing.Process.__init__(self, target=listener_process, name=self.name, args=passed_args)
-        self.authkey=self.env.authkey
-        self.daemon = False
 
 
 
@@ -438,6 +409,11 @@ class DriverPool:
         return self.pool["protocol"][name]
     def protocols(self):
         return self.pool["protocol"].keys()
+    def driver(self, name):
+        for p in self.pool.keys():
+            if name in self.pool[p].keys():
+                return self.pool[p][name]
+        return None
 
 
 
@@ -495,9 +471,9 @@ class ZAPEnv:
             self.pc.load_pyclp_module(str(m.Slots["name"]))
         for m in self.pc.filter(relation="start"):
             try:
-                self.pc(m.Slots["name"], self.pc, self.logger, multifield2py(m.Slots["args"]))
-            except ValueError, msg:
-            #except KeyboardInterrupt:
+                self.pc(m.Slots["name"], self, self.logger, multifield2py(m.Slots["args"]))
+            #except ValueError, msg:
+            except ZeroDivisionError, msg:
                 self.logger.error("Exception in startup module: %s"%msg)
         return True
     def set_pythonpath(self):
@@ -519,34 +495,31 @@ class ZAPEnv:
             self.drivers += str(m.Slots["path"])
         self.drivers.reload_mods()
         self.logger.info("Registering drivers chains")
+        for m in self.pc.filter(relation="driver"):
+            driver_type = str(m.Slots["type"]).lower()
+            try:
+                obj = self.drivers("%s.main"%m.Slots["name"], self, self.logger, multifield2py(m.Slots["args"]))
+            #except ValueError, msg:
+            except FloatingPointError, msg:
+                self.logger.error("Exception in initialisation: %s"%msg)
+                return False
+            self.drv.register(driver_type, str(m.Slots["name"]), obj)
         for m in self.pc.filter(relation="driver_chain"):
             name = str(m.Slots["name"]).strip()
             if not name:
                 continue
             self.logger.info("Registering drivers chain for %s"%name)
             self.drv.register_chain(name, multifield2py(m.Slots["chain"]))
-        for m in self.pc.filter(relation="driver"):
-            driver_type = str(m.Slots["type"]).lower()
-            try:
-                obj = self.drivers("%s.main"%m.Slots["name"], self, self.logger, multifield2py(m.Slots["args"]))
-                try:
-                    obj.driver()
-                except FloatingPointError:
-                    print "A",obj
-            #except ValueError, msg:
-            except FloatingPointError, msg:
-                self.logger.error("Exception in initialisation: %s"%msg)
-                return False
-            self.drv.register(driver_type, str(m.Slots["name"]), obj)
         return True
     def run_daemons(self):
+        from Process import *
         self.logger.info("Starting background ZAP daemons")
         for m in self.pc.filter(relation="daemon"):
             self.logger.info("Attempting to spawn '%s' as %s"%(m.Slots["desc"], m.Slots["main"]))
             try:
-                d = DaemonProcess(name=str(m.Slots["name"]), main=str(m.Slots["main"]), env=self, args=multifield2py(m.Slots["args"]))
+                d = DaemonProcess(name=str(m.Slots["name"]), main=str(m.Slots["main"]), daemon=True, target=daemon_process, env=self, args=multifield2py(m.Slots["args"]))
                 d.start()
-            except:
+            except ZeroDivisionError:
                 self.logger.error("Exception while starting '%s' as %s"%(m.Slots["desc"], m.Slots["main"]))
     def start_listeners(self):
         self.logger.info("Starting network listeners")
@@ -624,7 +597,8 @@ def Loop():
         logger.error("Error in listeners initialization")
         return
     logger.info("Entering loop...")
-    proctitle("main", "Main loop")
+    from Process import proctitle
+    proctitle("main", "Main loop", __proc__)
 
     try:
         while True:

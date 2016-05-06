@@ -15,7 +15,7 @@ class ZabbixProtocol(ProtocolDriver):
         return data[13:p_len]
     def send_data(self, data):
         hdr="ZBXD"+struct.pack("B",1)+struct.pack("L",len(data)+1)
-        return hdr+data
+        return hdr+data+'\n'
 
 def main(env, logger, *args, **argv):
     return ProtocolDriverCreator("zabbix", env, logger, ZabbixProtocol, args, argv)
