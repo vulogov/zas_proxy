@@ -201,6 +201,10 @@
         (type INTEGER)
         (default 3)
     )
+    (slot max_buf_size
+        (type INTEGER)
+        (default 4096)
+    )
     (multislot args)
 )
 ;;

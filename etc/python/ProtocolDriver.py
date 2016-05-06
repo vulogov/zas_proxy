@@ -21,8 +21,16 @@ class ProtocolDriver:
         self.build_chain()
     def build_chain(self):
         self.chain = build_chain(self.env.drv.chain, self.name)
-        
+        self.rcv_drivers = []
+        self.send_drivers = []
+        for d in self.chain[::-1]:
+            self.rcv_drivers.append(self.env.drv.protocol(d).driver())
+        for d in self.chain:
+            self.send_drivers.append(self.env.drv.protocol(d).driver())
         print "***",self.chain
+    def recv_data(self, data):
+        return data
+
     def recv(self, sock, buf_len=1024):
         buf = ""
         while True:
@@ -30,13 +38,26 @@ class ProtocolDriver:
             if not buf or len(buf) == 0:
                 break
             buf += _buf
+        data = buf
+        for d in self.rcv_drivers:
+            data = d.recv_data(data)
+        return self.recv_data(data)
 
     def _recv(self, sock, buf_len=1024):
         buf = sock.recv(buf_len)
         return buf
 
-    def send(self):
-        return "***"
+    def send_data(self, data):
+        return data
+
+    def send(self, data):
+        data = self.send_data(data)
+        for d in self.send_drivers:
+            data = d.send_data(data)
+        sock.send(data)
+
+
+
 
 class ProtocolDriverCreator:
     def __init__(self, name, env, logger, cls, args, argv):

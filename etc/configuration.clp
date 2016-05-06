@@ -74,12 +74,17 @@
     (name "zabbix")
     (desc "Zabbix protocol driver")
 )
+(driver
+    (type "protocol")
+    (name "zabbix_json")
+    (desc "Zabbix JSON packer")
+)
 ;;
 ;; Define drivers chain
 ;;
 (driver_chain
     (name "zabbix_active_proxy")
-    (chain "zabbix")
+    (chain "zabbix_json", "zabbix")
 )
 ;;
 ;; Start the daemons
