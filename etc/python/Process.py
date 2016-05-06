@@ -35,5 +35,6 @@ class DaemonProcess(multiprocessing.Process, Object):
         multiprocessing.Process.__init__(self, target=self.target, name=self.name, args=passed_args)
         self.Object__set_attr("daemon", argv, True)
         self.authkey=self.env.authkey
+        self.Initialize()
     def setproctitle(self, msg):
         proctitle(self.main, msg)

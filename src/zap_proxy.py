@@ -101,6 +101,14 @@ class Object(object):
             setattr(self, key, argv[key])
         else:
             setattr(self, key, default)
+    def Initialize(self):
+        import inspect
+        for c in inspect.getmro(self.__class__):
+            try:
+                init_method = getattr(c, "Init")
+            except AttributeError:
+                continue
+            apply(init_method, (self,))
 
 
 ########################################################################################################################
@@ -354,6 +362,7 @@ class PYCLP(PY,CLP):
         else:
             apply(PY.__init__, (self,))
         apply(CLP.__init__, (self,), argv)
+        self.Initialize()
     def load_pyclp_module(self, name):
         import fnmatch
         mod = self.find_the_mod(name)
@@ -420,6 +429,7 @@ class DriverPool:
 class ZAPEnv:
     def __init__(self, args):
         global logger
+        import inspect
         self.args = args
         self.logger = logger
         self.logger.info("Initializing environment")

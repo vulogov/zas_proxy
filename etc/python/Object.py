@@ -68,4 +68,12 @@ class Object(object):
             setattr(self, key, argv[key])
         else:
             setattr(self, key, default)
+    def Initialize(self):
+        import inspect
+        for c in inspect.getmro(self.__class__):
+            try:
+                init_method = getattr(c, "Init")
+            except AttributeError:
+                continue
+            apply(init_method, (self,))
 
