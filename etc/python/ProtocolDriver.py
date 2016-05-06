@@ -18,6 +18,7 @@ class ProtocolDriver:
         self.logger = self.creator.logger
         self.args = self.creator.args
         self.argv = self.creator.argv
+        self.build_chain()
     def build_chain(self):
         self.chain = build_chain(self.env.drv.chain, self.name)
         self.rcv_drivers = []
