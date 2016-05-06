@@ -50,7 +50,7 @@ class ProtocolDriver:
     def send_data(self, data):
         return data
 
-    def send(self, data):
+    def send(self, sock, data):
         data = self.send_data(data)
         for d in self.send_drivers:
             data = d.send_data(data)

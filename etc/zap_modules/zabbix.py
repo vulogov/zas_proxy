@@ -1,13 +1,7 @@
 __author__  =  'Vladimir Ulogov'
 __version__ = 'v0.1.0'
 
-class Heartbeat:
-    def __init__(self, env, proc, args, argv):
-        self.env = env
-        self.proc = proc
-        self.proxyname = args[0]
-        self.argv = argv
-        print self.env.drv.pool
+from Process import
 
 def heartbeat(env, proc, args, argv):
     import time
