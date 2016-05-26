@@ -18,16 +18,16 @@ class ProtocolDriver:
         self.logger = self.creator.logger
         self.args = self.creator.args
         self.argv = self.creator.argv
-        self.build_chain()
     def build_chain(self):
         self.chain = build_chain(self.env.drv.chain, self.name)
+        print "***",self.chain
         self.rcv_drivers = []
         self.send_drivers = []
         for d in self.chain[::-1]:
             self.rcv_drivers.append(self.env.drv.driver(d).driver())
         for d in self.chain:
             self.send_drivers.append(self.env.drv.driver(d).driver())
-        print "***",self.chain
+        print self.rcv_drivers, self.send_drivers
     def recv_data(self, data):
         return data
 
@@ -55,6 +55,17 @@ class ProtocolDriver:
         for d in self.send_drivers:
             data = d.send_data(data)
         sock.send(data)
+    def toChain(self, data):
+        _data = self.send_data(data)
+        print data,type(data)
+        for d in self.send_drivers:
+            print d.name,_data,type(_data)
+            _data = d.send_data(_data)
+        return _data
+    def fromChain(self, data):
+        for d in self.rcv_drivers:
+            data = d.recv_data(data)
+        return self.recv_data(data)
 
 
 
@@ -68,6 +79,5 @@ class ProtocolDriverCreator:
         self.args = args
         self.argv = argv
     def driver(self):
-        print self.cls
         return self.cls(self)
 

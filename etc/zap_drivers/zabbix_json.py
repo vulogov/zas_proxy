@@ -1,11 +1,14 @@
-__author__ = 'gandalf'
+__author__  =  'Vladimir Ulogov'
+__version__ = 'v0.1.0'
 
 import simplejson
 from ProtocolDriver import *
 
 class ZabbixJson(ProtocolDriver):
-    def recv_data(self, data):
-        return simplejson.dumps(data)
+    def send_data(self, data):
+        buffer = simplejson.dumps(data)
+        print "DUMP",repr(buffer),type(buffer)
+        return buffer
     def recv_data(self, data):
         return simplejson.loads(data)
 

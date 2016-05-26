@@ -79,12 +79,26 @@
     (name "zabbix_json")
     (desc "Zabbix JSON packer")
 )
+(driver
+    (type "protocol")
+    (name "zabbix_json_timestamp")
+    (desc "Zabbix JSON clock")
+)
+(driver
+    (type "protocol")
+    (name "zabbix_ns_stamp")
+    (desc "Zabbix NS stamp")
+)
 ;;
 ;; Define drivers chain
 ;;
 (driver_chain
     (name "zabbix_active_proxy")
-    (chain "zabbix_json", "zabbix")
+    (chain "zabbix_json_timestamp" "zabbix_json" "zabbix")
+)
+(driver_chain
+    (name "zabbix_json_timestamp")
+    (chain "zabbix_ns_stamp")
 )
 ;;
 ;; Start the daemons
@@ -127,4 +141,13 @@
 (zabbix_server
     (name "dev.zabbix.us")
     (desc "Local Zabbix Server")
+)
+
+;;
+;; Configuration facts
+;;
+(cfg
+    (section "heartbeat")
+    (key     "beat")
+    (value    3.0)
 )

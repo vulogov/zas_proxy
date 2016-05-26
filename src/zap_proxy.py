@@ -454,7 +454,7 @@ class ZAPEnv:
             return False
         try:
             self.pc.facts(configuration_file)
-        except:
+        except FloatingPointError:
             return False
         try:
             self.logger.info("Running the configuration")
@@ -536,6 +536,12 @@ class ZAPEnv:
         for m in self.pc.filter(relation="daemon"):
             print m
         return True
+    def cfg(self, section, key):
+        for m in self.pc.filter(relation="cfg"):
+            print "cfg",m.Slots["section"],m.Slots["key"],section,key
+            if m.Slots["section"] == section and m.Slots["key"] == key:
+                return m.Slots["value"]
+        return None
 
 
 

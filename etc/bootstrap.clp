@@ -93,6 +93,7 @@
     )
     (multislot args)
 )
+
 (deftemplate driver_chain
     (slot name
         (type STRING)
@@ -133,6 +134,9 @@
     (slot key
         (type STRING)
         (default ?DERIVE)
+    )
+    (slot value
+        (default 0)
     )
     (slot note
         (type STRING)
