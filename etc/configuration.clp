@@ -71,6 +71,11 @@
 )
 (driver
     (type "protocol")
+    (name "zabbix_active_proxy_cfg")
+    (desc "Zabbix Active Proxy Configuration protocol driver")
+)
+(driver
+    (type "protocol")
     (name "zabbix")
     (desc "Zabbix protocol driver")
 )
@@ -78,6 +83,11 @@
     (type "protocol")
     (name "zabbix_json")
     (desc "Zabbix JSON packer")
+)
+(driver
+    (type "protocol")
+    (name "zabbix_json_request")
+    (desc "Zabbix JSON request handler")
 )
 (driver
     (type "protocol")
@@ -96,8 +106,13 @@
 )
 (driver
     (type "protocol")
-    (name "zabbix_json_request")
-    (desc "Zabbix JSON Request")
+    (name "zabbix_json_host")
+    (desc "Zabbix JSON Hostname")
+)
+(driver
+    (type "protocol")
+    (name "zabbix_status_update")
+    (desc "Zabbix Update Host status")
 )
 (driver
     (type "db")
@@ -109,11 +124,15 @@
 ;;
 (driver_chain
     (name "zabbix_active_proxy")
-    (chain "zabbix_json_request" "zabbix_json_host" "zabbix_json_timestamp" "zabbix_json" "zabbix")
+    (chain "zabbix_json_request" "zabbix_json_host" "zabbix_status_update" "zabbix_json_timestamp" "zabbix_json" "zabbix")
 )
 (driver_chain
     (name "zabbix_json_timestamp")
     (chain "zabbix_ns_stamp")
+)
+(driver_chain
+    (name "zabbix_active_proxy_cfg")
+    (chain "zabbix_json_request" "zabbix_json_host" "zabbix_json_timestamp" "zabbix_json" "zabbix")
 )
 ;;
 ;; Define DB linkage

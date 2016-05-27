@@ -522,7 +522,7 @@ class ZAPEnv:
             self.drv.register_chain(name, multifield2py(m.Slots["chain"]))
         return True
     def run_daemons(self):
-        from Process import *
+        from Process import DaemonProcess, daemon_process
         self.logger.info("Starting background ZAP daemons")
         for m in self.pc.filter(relation="daemon"):
             self.logger.info("Attempting to spawn '%s' as %s"%(m.Slots["desc"], m.Slots["main"]))

@@ -1,18 +1,16 @@
 __author__  =  'Vladimir Ulogov'
 __version__ = 'v0.1.0'
 
+import time
 import simplejson
 from ProtocolDriver import *
 
 class ZabbixJsonHost(ProtocolDriver):
     def recv_data(self, data):
-        drv = self.env.db_link("host")
-        if drv != None:
-            print drv
         return data
     def send_data(self, data):
         import time
-        data["host"] = self.ctx["host"]
+        data["host"] = str(self.ctx["host"])
         return data
 
 

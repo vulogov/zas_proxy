@@ -20,10 +20,10 @@ def heartbeat(env, proc, args, argv):
         env.logger.info("Heartbeat running")
         proc.setproctitle("Heartbeat daemon at: %s"%time.asctime())
         for m in env.pc.filter(relation="zabbix_server"):
-            name = m.Slots["name"]
-            port = m.Slots["port"]
-            ip   = m.Slots["address"]
-            hostname = m.Slots["hostname"]
+            name = str(m.Slots["name"])
+            port = int(m.Slots["port"])
+            ip   = str(m.Slots["address"])
+            hostname = str(m.Slots["hostname"])
             drv.update_ctx_in_chain(host=hostname)
             heartbeat = str(drv.toChain("proxy heartbeat"))
             s = TCPClient(ip, port, timeout)
@@ -39,7 +39,7 @@ def active_proxy(env, proc, args, argv):
     bufsize = env.cfg("client", "bufsize", int, 4096)
     timeout = env.cfg("client", "timeout", float, 3.0)
     env.logger.info("Will request configuration every %d seconds" %beat)
-    drv = env.drv.driver("zabbix_active_proxy").driver()
+    drv = env.drv.driver("zabbix_active_proxy_cfg").driver()
     drv.set_drv_context()
     drv.build_chain()
     while True:
@@ -47,15 +47,14 @@ def active_proxy(env, proc, args, argv):
         env.logger.info("ActiveProxy running")
         proc.setproctitle("ActiveProxy daemon at: %s"%time.asctime())
         for m in env.pc.filter(relation="zabbix_server"):
-            name = m.Slots["name"]
-            port = m.Slots["port"]
-            ip = m.Slots["address"]
-            hostname = m.Slots["hostname"]
+            name = str(m.Slots["name"])
+            port = int(m.Slots["port"])
+            ip = str(m.Slots["address"])
+            hostname = str(m.Slots["hostname"])
             drv.update_ctx_in_chain(host=hostname)
             pxconf = str(drv.toChain("proxy config"))
             s = TCPClient(ip, port, timeout)
             s.bufsize = bufsize
             s.write(pxconf)
             buf = s.read()
-            print "RECV",repr(buf)
-            print drv.fromChain(buf)
+            data = drv.fromChain(buf)
