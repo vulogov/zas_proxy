@@ -5,7 +5,6 @@ from ProtocolDriver import *
 
 class ZabbixJsonRequest(ProtocolDriver):
     def send_data(self, data):
-        print "###",data
         return {"request": data}
 
 

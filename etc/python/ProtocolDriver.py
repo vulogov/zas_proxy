@@ -20,7 +20,6 @@ class ProtocolDriver:
         self.argv = self.creator.argv
     def build_chain(self):
         self.chain = build_chain(self.env.drv.chain, self.name)
-        print "***",self.chain
         self.rcv_drivers = []
         self.send_drivers = []
         for d in self.chain[::-1]:

@@ -7,7 +7,6 @@ from ProtocolDriver import *
 class ZabbixJson(ProtocolDriver):
     def send_data(self, data):
         buffer = simplejson.dumps(data)
-        print "DUMP",repr(buffer),type(buffer)
         return buffer
     def recv_data(self, data):
         return simplejson.loads(data)

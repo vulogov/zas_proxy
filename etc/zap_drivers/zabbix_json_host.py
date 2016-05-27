@@ -12,7 +12,6 @@ class ZabbixJsonHost(ProtocolDriver):
         return data
     def send_data(self, data):
         import time
-        print "###",type(data)
         data["host"] = self.ctx["host"]
         return data
 

@@ -16,7 +16,12 @@ class TCPClient:
         self.bufsize = 4096
         self.buffer = ''
     def read(self):
-        self.buffer = self.sock.recv(self.bufsize)
+        self.buffer = ''
+        while True:
+            b = self.sock.recv(self.bufsize)
+            if not b:
+                break
+            self.buffer += b
         return self.buffer
     def write(self, buffer):
         if len(buffer) > self.bufsize:

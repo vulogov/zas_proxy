@@ -10,7 +10,7 @@ def daemon(env, proc, args, argv):
     import time
     env.logger.info("Dummy daemon started %s"%repr(args))
     while True:
-        time.sleep(5)
+        time.sleep(500)
         env.logger.info("Dummy daemon running")
         proc.setproctitle("Dummy daemon at: %s"%time.asctime())
 

@@ -7,7 +7,6 @@ from ProtocolDriver import *
 class ZabbixJsonTimestamp(ProtocolDriver):
     def send_data(self, data):
         import time
-        print "###",type(data)
         data["clock"] = time.time()
         return data
 

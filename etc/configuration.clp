@@ -127,27 +127,31 @@
 ;;
 ;; Start the daemons
 ;;
-(daemon
-    (main "dummy.daemon")
-    (name "dummy_daemon")
-    (desc "Dummy ZAP daemon")
-    (args "a" "b" "c")
-)
+;(daemon
+;    (main "dummy.daemon")
+;    (name "dummy_daemon")
+;    (desc "Dummy ZAP daemon")
+;    (args "a" "b" "c")
+;)
 (daemon
     (main "zabbix.heartbeat")
     (name "Heartbeat")
     (desc "Zabbix Heartbeat daemon")
-    (args "dev-zap")
+)
+(daemon
+    (main "zabbix.active_proxy")
+    (name "ActiveProxy")
+    (desc "Zabbix ActiveProxy daemon")
 )
 ;;
 ;; Execute this code during ZAP startup
 ;;
 
-(start
-    (name "dummy.main")
-    (desc "Dummy startup code")
-    (args "b" 1 2 3.14 TRUE)
-)
+;(start
+;    (name "dummy.main")
+;    (desc "Dummy startup code")
+;    (args "b" 1 2 3.14 TRUE)
+;)
 
 ;;
 ;; Now, configure the LISTEN interfaces
@@ -179,7 +183,7 @@
 (cfg
     (section "heartbeat")
     (key     "beat")
-    (value    3.0)
+    (value    60.0)
 )
 (cfg
     (section "client")
@@ -195,4 +199,9 @@
     (section "db")
     (key     "default_driver_args")
     (args    "127.0.0.1" 6379)
+)
+(cfg
+    (section "active_proxy")
+    (key     "cfg_update")
+    (value    3.0)
 )
