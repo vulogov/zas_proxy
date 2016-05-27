@@ -536,12 +536,37 @@ class ZAPEnv:
         for m in self.pc.filter(relation="daemon"):
             print m
         return True
-    def cfg(self, section, key):
+    def cfg(self, section, key, fun=int, default=0):
         for m in self.pc.filter(relation="cfg"):
             print "cfg",m.Slots["section"],m.Slots["key"],section,key
+            if type(default) == type(()):
+                k = "args"
+            else:
+                k = "value"
             if m.Slots["section"] == section and m.Slots["key"] == key:
-                return m.Slots["value"]
-        return None
+                try:
+                    return fun(m.Slots[k])
+                except:
+                    return default
+        return default
+    def db_link(self, src):
+        import fnmatch
+        drv_name = ""
+        args = ()
+        for m in self.pc.filter(relation="db_link"):
+            if fnmatch.fnmatch(src, m.Slots["src"]):
+                drv_name = str(m.Slots["name"])
+                drv_args = tuple(m.Slots["args"])
+                break
+        if not drv_name:
+            drv_name = self.cfg("db", "default_driver", str, "")
+            drv_args = self.cfg("db", "default_driver_args", tuple, ())
+        if not drv_name:
+            return None
+        dbc = self.drv.db(drv_name)
+        drv = dbc.driver()
+        drv.set_db_args(drv_args)
+        return drv
 
 
 

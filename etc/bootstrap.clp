@@ -105,6 +105,23 @@
     )
     (multislot chain)
 )
+
+(deftemplate db_link
+    (slot name
+        (type STRING)
+        (default ?DERIVE)
+    )
+    (slot desc
+        (type STRING)
+        (default "")
+    )
+    (slot src
+        (type STRING)
+        (default "*")
+    )
+    (multislot args)
+)
+
 ;;
 ;; PYTHON daemin procresses
 ;;
@@ -142,6 +159,7 @@
         (type STRING)
         (default "")
     )
+    (multislot args)
 )
 ;;
 ;; USS startup modules
@@ -216,6 +234,10 @@
 ;;
 (deftemplate zabbix_server
     (slot name
+        (type STRING)
+        (default ?DERIVE)
+    )
+    (slot hostname
         (type STRING)
         (default ?DERIVE)
     )

@@ -24,10 +24,27 @@ class ProtocolDriver:
         self.rcv_drivers = []
         self.send_drivers = []
         for d in self.chain[::-1]:
-            self.rcv_drivers.append(self.env.drv.driver(d).driver())
+            _d = self.env.drv.driver(d).driver()
+            _d.set_drv_context(self.ctx)
+            self.rcv_drivers.append(_d)
         for d in self.chain:
-            self.send_drivers.append(self.env.drv.driver(d).driver())
-        print self.rcv_drivers, self.send_drivers
+            _d = self.env.drv.driver(d).driver()
+            _d.set_drv_context(self.ctx)
+            self.send_drivers.append(_d)
+    def update_ctx_in_chain(self, **ctx):
+        for d in self.rcv_drivers:
+            for k in ctx.keys():
+                d.ctx[k] = ctx[k]
+        for d in self.send_drivers:
+            for k in ctx.keys():
+                d.ctx[k] = ctx[k]
+
+
+    def set_drv_context(self, _ctx={}, **ctx):
+        self.ctx = _ctx
+        for k in ctx.keys():
+            self.ctx[k] = ctx[k]
+
     def recv_data(self, data):
         return data
 
@@ -63,9 +80,10 @@ class ProtocolDriver:
             _data = d.send_data(_data)
         return _data
     def fromChain(self, data):
+        _data = data
         for d in self.rcv_drivers:
-            data = d.recv_data(data)
-        return self.recv_data(data)
+            _data = d.recv_data(_data)
+        return self.recv_data(_data)
 
 
 

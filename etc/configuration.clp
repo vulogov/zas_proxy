@@ -89,16 +89,40 @@
     (name "zabbix_ns_stamp")
     (desc "Zabbix NS stamp")
 )
+(driver
+    (type "protocol")
+    (name "zabbix_json_host")
+    (desc "Zabbix JSON Hostname")
+)
+(driver
+    (type "protocol")
+    (name "zabbix_json_request")
+    (desc "Zabbix JSON Request")
+)
+(driver
+    (type "db")
+    (name "database_redis")
+    (desc "Storing data into REDIS storage")
+)
 ;;
 ;; Define drivers chain
 ;;
 (driver_chain
     (name "zabbix_active_proxy")
-    (chain "zabbix_json_timestamp" "zabbix_json" "zabbix")
+    (chain "zabbix_json_request" "zabbix_json_host" "zabbix_json_timestamp" "zabbix_json" "zabbix")
 )
 (driver_chain
     (name "zabbix_json_timestamp")
     (chain "zabbix_ns_stamp")
+)
+;;
+;; Define DB linkage
+;;
+(db_link
+    (name "database_redis")
+    (desc "Everything is stored in REDIS")
+    (src "*")
+    (args "127.0.0.1" 6379)
 )
 ;;
 ;; Start the daemons
@@ -141,13 +165,34 @@
 (zabbix_server
     (name "dev.zabbix.us")
     (desc "Local Zabbix Server")
+    (hostname "ZAP Active Proxy")
 )
 
 ;;
 ;; Configuration facts
 ;;
 (cfg
+    (section "client")
+    (key     "bufsize")
+    (value    4096)
+)
+(cfg
     (section "heartbeat")
     (key     "beat")
     (value    3.0)
+)
+(cfg
+    (section "client")
+    (key     "timeout")
+    (value    5.0)
+)
+(cfg
+    (section "db")
+    (key     "default_driver")
+    (value    "database_redis")
+)
+(cfg
+    (section "db")
+    (key     "default_driver_args")
+    (args    "127.0.0.1" 6379)
 )
