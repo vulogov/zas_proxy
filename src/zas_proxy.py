@@ -670,6 +670,24 @@ def Loop():
             p.terminate()
             p.join()
 
+def InteractiveLoop():
+    global logger, ARGS
+
+    ENV = ZAPEnv(ARGS)
+    if not ENV.bootstrap():
+        logger.error("Error in boostrapping and/or configuration")
+        return
+    if not ENV.load_drivers():
+        logger.error("Error in loading ZAS drivers")
+        return
+    from Process import proctitle
+
+    proctitle("main", "ZAS CLIPS interactive shell", __proc__)
+
+    from clipsshell import Shell
+    sh = Shell(ENV)
+    sh.Run()
+
 
 def _Start(args, parser, fun):
     global logger
@@ -684,7 +702,7 @@ def _Start(args, parser, fun):
     except KeyError:
         logger.error("User %(user)s or Group %(group)s does not exists" % args)
         return None
-    daemon = daemonize.Daemonize(app="ZAP", pid=args.pid, action=fun, chdir=home, user=args.user, group=args.group,
+    daemon = daemonize.Daemonize(app="ZAS", pid=args.pid, action=fun, chdir=home, user=args.user, group=args.group,
                                  logger=logger, foreground=not args.daemonize)
     logger.info("Executing ZAS as %s/%s in %s" % (args.user, args.group, home))
     daemon.start()
@@ -722,6 +740,9 @@ def Stop(args, parser):
         logger.error("ZAP process is still there. Nothing is I can do. Please contact System Administrator.")
     return False
 
+def Interactive(args, parser):
+    args.daemonize = False
+    return _Start(args, parser, InteractiveLoop)
 
 def Main(args, parser):
     global logger
@@ -736,6 +757,8 @@ def Main(args, parser):
             logger.error("Can not stop ZAS process. Restart is failed")
             return
         Start(args, parser)
+    elif args.cmd.lower() == "interactive":
+        Interactive(args, parser)
     else:
         parser.print_help()
 
