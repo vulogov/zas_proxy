@@ -6,8 +6,8 @@
 ##
 
 __author__ = 'Vladimir Ulogov'
-__version__ = 'ZAP 0.0.1'
-__proc__    = 'ZAP'
+__version__ = 'ZAS 0.0.1'
+__proc__    = 'ZAS'
 
 import logging
 import setproctitle
@@ -58,10 +58,10 @@ def Is_Process_Running():
     try:
         pid = int(open(ARGS.pid).read())
     except:
-        logger.error("Can not detect ZAP process ID from %s" % ARGS.pid)
+        logger.error("Can not detect ZAS process ID from %s" % ARGS.pid)
         return None
     if not os.path.exists('/proc/%d' % pid):
-        logger.info("ZAP process with PID=%d isn't running. Removing stale PID file" % pid)
+        logger.info("ZAS process with PID=%d isn't running. Removing stale PID file" % pid)
         os.unlink(args.pid)
         return None
     return pid
@@ -463,11 +463,11 @@ class ZAPEnv:
             self.logger.error("Error in running the configuration")
             return False
         for m in self.pc.filter(relation="application"):
-            self.logger.info("ZAP Application name       : %-40s"%m.Slots["name"])
-            self.logger.info("ZAP Application description: %-40s"%m.Slots["desc"])
-            self.logger.info("ZAP Application POC        : %-40s"%m.Slots["poc"])
-            self.logger.info("ZAP Application email      : %-40s"%m.Slots["email"])
-            self.logger.info("ZAP Application phone      : %-40s"%m.Slots["phone"])
+            self.logger.info("ZAS Application name       : %-40s"%m.Slots["name"])
+            self.logger.info("ZAS Application description: %-40s"%m.Slots["desc"])
+            self.logger.info("ZAS Application POC        : %-40s"%m.Slots["poc"])
+            self.logger.info("ZAS Application email      : %-40s"%m.Slots["email"])
+            self.logger.info("ZAS Application phone      : %-40s"%m.Slots["phone"])
         self.set_pythonpath()
         for m in self.pc.filter(relation="py_module"):
             self.logger.info("Adding path %s for the '%s'"%(m.Slots["path"],m.Slots["name"]))
@@ -598,20 +598,20 @@ class ZAPEnv:
 
 def build_argparser():
     global ARGS
-    parser = argparse.ArgumentParser(description='ZAP_proxy - Zabbix Application Proxy')
+    parser = argparse.ArgumentParser(description='ZAS_proxy - Zabbix Application Simulator')
     parser.add_argument('--config', '-c', nargs='?', default=".", action="store",
                         help='Path to the configuration directory')
-    parser.add_argument('--log', '-l', nargs='?', default="/tmp/zap_proxy.log", action="store",
+    parser.add_argument('--log', '-l', nargs='?', default="/tmp/zas_proxy.log", action="store",
                         help='Path to the Log file')
     parser.add_argument('--verbose', '-v', default=0, action="count", help='Verbosity level')
     parser.add_argument('--cmd', '-C', default="help", action="store",
                         help="Execute specific command. Possibilities are: [start|stop|restart|help]")
-    parser.add_argument('--daemonize', '-d', default=False, action="store_true", help='Run ZAP as a Unix Daemon')
+    parser.add_argument('--daemonize', '-d', default=False, action="store_true", help='Run ZAS as a Unix Daemon')
     parser.add_argument('--pid', '-P', default="/tmp/zap_proxy.pid", action="store", help='Path to the PID file')
     parser.add_argument('--user', '-U', default="zabbix", action="store", help='Run ZAP as User')
     parser.add_argument('--group', '-G', default="zabbix", action="store", help='Set Group privileges for a ZAP')
-    parser.add_argument('--bootstrap', '-b', default="bootstrap.clp", action="store", help='Name of the ZAP bootstrap file')
-    parser.add_argument('--configuration', '-f', default="configuration.clp", action="store", help='Name of the ZAP configuration file')
+    parser.add_argument('--bootstrap', '-b', default="bootstrap.clp", action="store", help='Name of the ZAS bootstrap file')
+    parser.add_argument('--configuration', '-f', default="configuration.clp", action="store", help='Name of the ZAS configuration file')
     ARGS = parser.parse_args()
     return parser, ARGS
 
@@ -649,7 +649,7 @@ def Loop():
         logger.error("Error in boostrapping and/or configuration")
         return
     if not ENV.load_drivers():
-        logger.error("Error in loading ZAP drivers")
+        logger.error("Error in loading ZAS drivers")
         return
     ENV.run_daemons()
     if not ENV.start_listeners():
@@ -686,7 +686,7 @@ def _Start(args, parser, fun):
         return None
     daemon = daemonize.Daemonize(app="ZAP", pid=args.pid, action=fun, chdir=home, user=args.user, group=args.group,
                                  logger=logger, foreground=not args.daemonize)
-    logger.info("Executing ZAP as %s/%s in %s" % (args.user, args.group, home))
+    logger.info("Executing ZAS as %s/%s in %s" % (args.user, args.group, home))
     daemon.start()
     return daemon
 
@@ -697,17 +697,17 @@ def Start(args, parser):
 def Stop(args, parser):
     global logger
 
-    logger.info("Trying to stop ZAP daemon")
+    logger.info("Trying to stop ZAS daemon")
     pid = Is_Process_Running()
     if not pid:
-        logger.info("ZAP isn't running. Nothing to stop")
+        logger.info("ZAS isn't running. Nothing to stop")
         return True
     for i in range(10):
-        logger.info("Trying to TERM ZAP daemon. Appempt #%d" % i)
+        logger.info("Trying to TERM ZAS daemon. Appempt #%d" % i)
         os.kill(pid, signal.SIGTERM)
         time.sleep(1)
         if not Is_Process_Running():
-            logger.info("ZAP is Gone!")
+            logger.info("ZAS is Gone!")
             return True
     if Is_Process_Running():
         logger.error("ZAP process is still there. Killing it")
@@ -733,7 +733,7 @@ def Main(args, parser):
         Stop(args, parser)
     elif args.cmd.lower() == "restart":
         if not Stop(args, parser):
-            logger.error("Can not stop ZAP process. Restart is failed")
+            logger.error("Can not stop ZAS process. Restart is failed")
             return
         Start(args, parser)
     else:
@@ -744,7 +744,7 @@ def main():
     global logger, ENV
     parser, args = build_argparser()
     set_logging(args)
-    logger.critical("Zabbix Application Proxy ver %s" % __version__)
+    logger.critical("Zabbix Application Simulator ver %s" % __version__)
     print args
     Main(args, parser)
 
