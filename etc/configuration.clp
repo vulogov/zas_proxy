@@ -119,6 +119,11 @@
     (name "database_redis")
     (desc "Storing data into REDIS storage")
 )
+(driver
+    (type "cache")
+    (name "whitedb_cache")
+    (desc "Cashing data in WhiteDB shared memory cache")
+)
 ;;
 ;; Define drivers chain
 ;;
@@ -135,13 +140,31 @@
     (chain "zabbix_json_request" "zabbix_json_host" "zabbix_json_timestamp" "zabbix_json" "zabbix")
 )
 ;;
-;; Define DB linkage
+;; Define DB/Cache linkage
 ;;
 (db_link
     (name "database_redis")
     (desc "Everything is stored in REDIS")
     (src "*")
     (args "127.0.0.1" 6379)
+)
+(cache_link
+    (name "whitedb_cache")
+    (desc "Configuration cache")
+    (src "config")
+    (args "configuration_cache" "8M")
+)
+(cache_link
+    (name "whitedb_cache")
+    (desc "Metrics cache")
+    (src "metrics")
+    (args "metrics_cache" "8M")
+)
+(cache_link
+    (name "whitedb_cache")
+    (desc "Metrics cache")
+    (src "discovery")
+    (args "discovery_cache" "8M")
 )
 ;;
 ;; Start the daemons
@@ -161,6 +184,11 @@
     (main "zabbix.active_proxy")
     (name "ActiveProxy")
     (desc "Zabbix ActiveProxy daemon")
+)
+(daemon
+    (main "simulator.simulator_controller")
+    (name "simulator_controller")
+    (desc "Controls of the execution of the Simulator threads")
 )
 ;;
 ;; Execute this code during ZAP startup
@@ -218,6 +246,21 @@
     (section "db")
     (key     "default_driver_args")
     (args    "127.0.0.1" 6379)
+)
+(cfg
+    (section "db")
+    (key     "default_cache")
+    (value    "whitedb_cache")
+)
+(cfg
+    (section "db")
+    (key     "default_cache_args")
+    (args    "cache")
+)
+(cfg
+    (section "db")
+    (key     "default_cache_size")
+    (value   "8M")
 )
 (cfg
     (section "active_proxy")

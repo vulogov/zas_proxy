@@ -527,7 +527,7 @@ class ZAPEnv:
         for m in self.pc.filter(relation="daemon"):
             self.logger.info("Attempting to spawn '%s' as %s"%(m.Slots["desc"], m.Slots["main"]))
             try:
-                d = DaemonProcess(name=str(m.Slots["name"]), main=str(m.Slots["main"]), daemon=True, target=daemon_process, env=self, args=multifield2py(m.Slots["args"]))
+                d = DaemonProcess(name=str(m.Slots["name"]), main=str(m.Slots["main"]), daemon=clp2py(m.Slots["daemonic"]), target=daemon_process, env=self, args=multifield2py(m.Slots["args"]))
                 d.start()
             except ZeroDivisionError:
                 self.logger.error("Exception while starting '%s' as %s"%(m.Slots["desc"], m.Slots["main"]))
@@ -566,6 +566,24 @@ class ZAPEnv:
         dbc = self.drv.db(drv_name)
         drv = dbc.driver()
         drv.set_db_args(drv_args)
+        return drv
+    def cache_link(self, src):
+        import fnmatch
+        cache_name = ""
+        args = ()
+        for m in self.pc.filter(relation="cache_link"):
+            if fnmatch.fnmatch(src, m.Slots["src"]):
+                cache_name = str(m.Slots["name"])
+                cache_args = tuple(m.Slots["args"])
+                break
+        if not cache_name:
+            cache_name = self.cfg("db", "default_cache", str, "")
+            cache_args = self.cfg("db", "default_cache_args", tuple, ())
+        if not cache_name:
+            return None
+        c = self.drv.cache(cache_name)
+        drv = c.driver()
+        drv.set_cache_args(cache_args)
         return drv
 
 
@@ -653,7 +671,7 @@ def Loop():
             p.join()
 
 
-def Start(args, parser):
+def _Start(args, parser, fun):
     global logger
 
     import pwd, grp
@@ -666,14 +684,14 @@ def Start(args, parser):
     except KeyError:
         logger.error("User %(user)s or Group %(group)s does not exists" % args)
         return None
-    daemon = daemonize.Daemonize(app="ZAP", pid=args.pid, action=Loop, chdir=home, user=args.user, group=args.group,
+    daemon = daemonize.Daemonize(app="ZAP", pid=args.pid, action=fun, chdir=home, user=args.user, group=args.group,
                                  logger=logger, foreground=not args.daemonize)
     logger.info("Executing ZAP as %s/%s in %s" % (args.user, args.group, home))
     daemon.start()
     return daemon
 
-
-
+def Start(args, parser):
+    return _Start(args, parser, Loop)
 
 
 def Stop(args, parser):

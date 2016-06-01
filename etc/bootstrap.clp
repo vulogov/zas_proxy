@@ -121,7 +121,21 @@
     )
     (multislot args)
 )
-
+(deftemplate cache_link
+    (slot name
+        (type STRING)
+        (default ?DERIVE)
+    )
+    (slot desc
+        (type STRING)
+        (default "")
+    )
+    (slot src
+        (type STRING)
+        (default "*")
+    )
+    (multislot args)
+)
 ;;
 ;; PYTHON daemin procresses
 ;;
@@ -137,6 +151,14 @@
     (slot desc
         (type STRING)
         (default "")
+    )
+    (slot daemonic
+        (type SYMBOL)
+        (default TRUE)
+    )
+    (slot n
+        (type INTEGER)
+        (default 1)
     )
     (multislot args)
 )
