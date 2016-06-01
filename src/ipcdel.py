@@ -1,5 +1,5 @@
 import wgdb
-for i in ["configuration_cache", "metrics_cache", "discovery_cache"]:
+for i in ["1001", "1002", "1003"]:
 	try:
 		wgdb.delete_database(i)
 	except:

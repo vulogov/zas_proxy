@@ -56,7 +56,6 @@ class WhiteDBCacheDriverCreator(CacheDriverCreator):
             args = []
             for a in m.Slots["args"]:
                 args.append(clp2py(a))
-            args[1]=h2b("16M")
             drv.args = tuple(args)
             drv._open(cache_name)
             self.logger.info("Initializing cache %s with size %s bytes"%(cache_name, drv.args[1]))

@@ -152,19 +152,19 @@
     (name "whitedb_cache")
     (desc "Configuration cache")
     (src "config")
-    (args "configuration_cache" "8M")
+    (args "1001" "4M")
 )
 (cache_link
     (name "whitedb_cache")
     (desc "Metrics cache")
     (src "metrics")
-    (args "metrics_cache" "8M")
+    (args "1002" "16M")
 )
 (cache_link
     (name "whitedb_cache")
     (desc "Metrics cache")
     (src "discovery")
-    (args "discovery_cache" "8M")
+    (args "1003" "8M")
 )
 ;;
 ;; Start the daemons
