@@ -1,6 +1,7 @@
 import clips as _cm
 import sys as _sys
 import string as _string
+import readline
 
 
 class Shell(object):
@@ -12,6 +13,7 @@ class Shell(object):
         self.__cmdno = 1
         self.__lineno = 1
         self.env = env
+        readline.set_history_length(1000)
 
     def __cmdcomplete(self, cms):
         """check if CLIPS command is complete (stolen from 'commline.c')"""

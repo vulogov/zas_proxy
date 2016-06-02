@@ -370,12 +370,14 @@ class PYCLP(PY,CLP):
             raise ValueError, "PYCLP module %s not found"%name
         c = 0
         for e in dir(mod):
+            print "MMM",e
             if fnmatch.fnmatch(e, "*_clips"):
                 fun_name = rchop(e,"_clips")
                 try:
                     fun = getattr(mod, fun_name)
-                except:
+                except ZeroDivisionError:
                     continue
+                print "FFF",fun
                 clips.RegisterPythonFunction(fun)
                 self.clips.Build(getattr(mod, e))
                 c += 1

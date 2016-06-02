@@ -41,7 +41,10 @@
     (name "match")
     (desc "Pattern matching functions")
 )
-
+(clips_mod
+    (name "numeric")
+    (desc "Numeric functions")
+)
 ;;
 ;; Path for the Drivers
 ;;
